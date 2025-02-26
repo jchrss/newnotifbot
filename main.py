@@ -3,6 +3,7 @@ import pickle
 import json
 import base64
 import time
+import asyncio
 import requests
 from io import BytesIO
 from dotenv import load_dotenv
@@ -12,7 +13,6 @@ from google.auth.transport.requests import Request
 from google_auth_oauthlib.flow import InstalledAppFlow
 from telegram import Update
 from telegram.ext import Application, CommandHandler, CallbackContext
-import asyncio
 
 # Load environment variables
 load_dotenv()
@@ -53,7 +53,9 @@ def authenticate_gmail():
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_config(credentials_data, SCOPES)
-            creds = flow.run_local_server(port=0)
+
+            # Use console-based authentication (avoids browser issue in Railway)
+            creds = flow.run_console()
 
             # Save credentials for future use
             with open(token_path, "wb") as token:
@@ -101,9 +103,9 @@ async def run_bot():
     application.add_handler(CommandHandler("status", status))
 
     # Initialize and start the bot properly
-    await application.initialize()  # ✅ Initialize the bot before starting
+    await application.initialize()
     await application.start()
-    await application.updater.start_polling()  # ✅ Start polling for Telegram updates
+    await application.updater.start_polling()
 
     print("✅ Telegram bot is running!")
 
