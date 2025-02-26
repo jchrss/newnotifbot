@@ -35,10 +35,10 @@ def authenticate_gmail():
             decoded_credentials = base64.b64decode(CREDENTIALS_JSON_BASE64)
             credentials_data = json.loads(decoded_credentials.decode("utf-8"))
         except Exception as e:
-            print(f"Error decoding credentials: {e}")
+            print(f"❌ Error decoding credentials: {e}")
             return None
     else:
-        print("CREDENTIALS_JSON is missing in environment variables.")
+        print("❌ CREDENTIALS_JSON is missing in environment variables.")
         return None
 
     # Load token if available
@@ -54,19 +54,23 @@ def authenticate_gmail():
         else:
             flow = InstalledAppFlow.from_client_config(credentials_data, SCOPES)
 
-            # Use manual authorization instead of browser
+            # ✅ Get manual authorization URL
             auth_url, _ = flow.authorization_url(prompt="consent")
-            print(f"\n🔗 Open this link in your browser to authorize: {auth_url}")
+            print(f"\n🔗 Open this link in your browser to authorize:\n{auth_url}")
 
-            # Ask the user to enter the authorization code
+            # 🚨 NOTE: If running on Railway, get the code manually and paste it
             auth_code = input("\n📌 Enter the authorization code here: ").strip()
-            creds = flow.fetch_token(code=auth_code)
+            
+            # ✅ Fetch the access token using the authorization code
+            flow.fetch_token(code=auth_code)
+            creds = flow.credentials  # ✅ Extract credentials after authentication
 
             # Save credentials for future use
             with open(token_path, "wb") as token:
                 pickle.dump(creds, token)
 
     return build("gmail", "v1", credentials=creds)
+
 
 # Fetch unread TradingView alerts
 def check_email():
