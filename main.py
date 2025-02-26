@@ -54,8 +54,13 @@ def authenticate_gmail():
         else:
             flow = InstalledAppFlow.from_client_config(credentials_data, SCOPES)
 
-            # Use console-based authentication (avoids browser issue in Railway)
-            creds = flow.run_console()
+            # Use manual authorization instead of browser
+            auth_url, _ = flow.authorization_url(prompt="consent")
+            print(f"\n🔗 Open this link in your browser to authorize: {auth_url}")
+
+            # Ask the user to enter the authorization code
+            auth_code = input("\n📌 Enter the authorization code here: ").strip()
+            creds = flow.fetch_token(code=auth_code)
 
             # Save credentials for future use
             with open(token_path, "wb") as token:
