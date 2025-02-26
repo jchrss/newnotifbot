@@ -1,7 +1,8 @@
 import os
 import pickle
-import requests
+import json
 import base64
+import requests
 import time
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
@@ -11,21 +12,30 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
-# Get variables from .env
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
+CREDENTIALS_JSON = os.getenv("CREDENTIALS_JSON")  # Base64 encoded credentials.json
 
-# Authenticate Gmail API
+# Function to decode credentials and authenticate Gmail API
 def authenticate_gmail():
     creds = None
+    
+    # Decode credentials.json from environment variable
+    credentials_path = "credentials.json"
+    if CREDENTIALS_JSON:
+        with open(credentials_path, "wb") as f:
+            f.write(base64.b64decode(CREDENTIALS_JSON))
+
     if os.path.exists("token.pickle"):
         with open("token.pickle", "rb") as token:
             creds = pickle.load(token)
+    
     if not creds or not creds.valid:
-        flow = InstalledAppFlow.from_client_secrets_file("credentials.json", ["https://www.googleapis.com/auth/gmail.modify"])
+        flow = InstalledAppFlow.from_client_secrets_file(credentials_path, ["https://www.googleapis.com/auth/gmail.modify"])
         creds = flow.run_local_server(port=0)
         with open("token.pickle", "wb") as token:
             pickle.dump(creds, token)
+    
     return build("gmail", "v1", credentials=creds)
 
 # Fetch unread TradingView alerts
